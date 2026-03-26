@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AxoSMP – Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060910;
+    --bg2: #0a1018;
+    --panel: #0d1520;
+    --panel2: #111e30;
+    --border: #1a2d44;
+    --accent: #00c8ff;
+    --accent2: #0ef0a0;
+    --danger: #ff4d4d;
+    --warning: #ffcc00;
+    --text: #c8dff0;
+    --text-dim: #4a6a88;
+    --owner: #ff4d4d;
+    --jrowner: #ff884d;
+    --manager: #ffcc00;
+    --srdev: #a855f7;
+    --dev: #818cf8;
+    --admin: #ef4444;
+    --srmod: #22d3ee;
+    --mod: #34d399;
+    --helper: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* SCANLINES */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none; z-index: 9999;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; top: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.6rem; font-weight: 700; letter-spacing: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sidebar-logo span {
+    font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); display: block; margin-top: 2px;
+  }
+
+  .sidebar-nav { padding: 16px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; cursor: pointer;
+    color: var(--text-dim); font-size: 0.85rem; letter-spacing: 1px;
+    transition: all 0.2s; position: relative; font-weight: 600;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active {
+    color: var(--accent);
+    background: rgba(0,200,255,0.06);
+  }
+  .nav-item.active::left {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent);
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--text-dim);
+  }
+  .back-link {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-dim); text-decoration: none;
+    font-size: 0.8rem; letter-spacing: 1px;
+    transition: color 0.2s; padding: 8px 0;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1; padding: 32px;
+    min-height: 100vh;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 32px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.8rem; font-weight: 700; letter-spacing: 3px;
+  }
+  .topbar-sub { color: var(--text-dim); font-size: 0.8rem; letter-spacing: 1px; margin-top: 4px; }
+
+  .btn {
+    padding: 10px 22px; border-radius: 7px;
+    font-family: 'Exo 2', sans-serif; font-size: 0.85rem;
+    font-weight: 700; letter-spacing: 1px; cursor: pointer;
+    border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent); color: #000;
+  }
+  .btn-primary:hover { background: #33d4ff; transform: translateY(-1px); }
+  .btn-danger {
+    background: rgba(255,77,77,0.15); color: var(--danger);
+    border: 1px solid rgba(255,77,77,0.3);
+  }
+  .btn-danger:hover { background: rgba(255,77,77,0.25); }
+  .btn-ghost {
+    background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* STATS OVERVIEW */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.s-owner::after { background: var(--owner); }
+  .stat-card.s-jrowner::after { background: var(--jrowner); }
+  .stat-card.s-manager::after { background: var(--manager); }
+  .stat-card.s-srdev::after { background: var(--srdev); }
+  .stat-card.s-dev::after { background: var(--dev); }
+  .stat-card.s-admin::after { background: var(--admin); }
+  .stat-card.s-srmod::after { background: var(--srmod); }
+  .stat-card.s-mod::after { background: var(--mod); }
+  .stat-card.s-helper::after { background: var(--helper); }
+
+  .stat-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 2rem; font-weight: 700; color: #fff;
+  }
+  .stat-label {
+    font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); margin-top: 4px;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 6px;
+    font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+    border: 1px solid var(--border); background: var(--panel);
+    color: var(--text-dim);
+  }
+  .filter-btn:hover, .filter-btn.active { color: #fff; border-color: rgba(255,255,255,0.3); }
+  .search-input {
+    flex: 1; min-width: 200px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 7px; padding: 9px 16px;
+    color: var(--text); font-family: 'Exo 2', sans-serif;
+    font-size: 0.85rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  /* MEMBER TABLE */
+  .members-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .members-header {
+    display: grid;
+    grid-template-columns: 1fr 160px 160px 100px;
+    padding: 14px 20px;
+    background: rgba(0,0,0,0.2);
+    font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+  }
+
+  .member-row {
+    display: grid;
+    grid-template-columns: 1fr 160px 160px 100px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    align-items: center;
+    transition: background 0.15s;
+  }
+  .member-row:hover { background: rgba(255,255,255,0.02); }
+  .member-row:last-child { border-bottom: none; }
+
+  .member-cell-name {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .mini-avatar {
+    width: 36px; height: 36px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    font-family: 'Rajdhani', sans-serif; flex-shrink: 0;
+  }
+  .m-name { font-weight: 600; font-size: 0.9rem; }
+  .m-joined { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+  .role-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 5px;
+    font-size: 0.72rem; letter-spacing: 1px; font-weight: 700;
+    text-transform: uppercase; border: 1px solid currentColor;
+  }
+
+  .row-actions { display: flex; gap: 8px; }
+  .action-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--text-dim); width: 30px; height: 30px;
+    border-radius: 5px; cursor: pointer; font-size: 0.8rem;
+    transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+  }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 32px;
+    width: 460px; max-width: 95vw;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+
+  .modal h2 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.4rem; letter-spacing: 3px; margin-bottom: 24px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 8px; display: block;
+    font-weight: 700;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    color: var(--text); font-family: 'Exo 2', sans-serif;
+    font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-select option { background: var(--bg2); }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+
+  /* LOGIN SCREEN */
+  .login-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500; flex-direction: column;
+  }
+  .login-box {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px 40px;
+    width: 380px; text-align: center;
+  }
+  .login-logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 2.5rem; font-weight: 700; letter-spacing: 6px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .login-sub { color: var(--text-dim); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 36px; }
+  .login-box .form-input { margin-bottom: 14px; }
+  .login-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 12px; min-height: 20px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 12px 24px; border-radius: 8px;
+    font-weight: 700; font-size: 0.85rem; letter-spacing: 1px;
+    transform: translateY(80px); opacity: 0; transition: all 0.3s;
+    z-index: 9998;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--accent2); color: #000; }
+  .toast.error { background: var(--danger); color: #fff; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 60px; color: var(--text-dim);
+    font-size: 0.9rem; letter-spacing: 1px;
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .members-header, .member-row { grid-template-columns: 1fr 120px 90px; }
+    .members-header > *:nth-child(3), .member-row > *:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">AXOSMP</div>
+    <div class="login-sub">ADMIN PANEL · ZUGANG</div>
+    <input type="text" class="form-input" id="loginUser" placeholder="Benutzername">
+    <input type="password" class="form-input" id="loginPass" placeholder="Passwort">
+    <div class="login-error" id="loginError"></div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="doLogin()">
+      🔐 Anmelden
+    </button>
+    <div style="margin-top:16px; font-size:0.72rem; color: var(--text-dim); letter-spacing:1px;">
+      Demo: admin / axosmp2025
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>AxoSMP</h1>
+    <span>Admin Panel</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="setPage('team')">
+      <span class="nav-icon">👥</span> Team Verwaltung
+    </div>
+    <div class="nav-item" onclick="setPage('overview')">
+      <span class="nav-icon">📊</span> Übersicht
+    </div>
+    <div class="nav-item" onclick="setPage('server')">
+      <span class="nav-icon">🖥️</span> Server Info
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="index.html" class="back-link">← Zurück zur Website</a>
+    <div style="margin-top: 8px; font-size:0.7rem; opacity:0.5;">
+      Eingeloggt als <span id="loggedUser">–</span>
+    </div>
+    <button class="btn btn-ghost" onclick="logout()" style="margin-top:12px; width:100%; font-size:0.75rem; padding:8px; justify-content:center;">
+      Ausloggen
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PAGE: TEAM -->
+  <div id="page-team">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Team Verwaltung</div>
+        <div class="topbar-sub">Mitglieder hinzufügen, bearbeiten und entfernen</div>
+      </div>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        ＋ Mitglied hinzufügen
+      </button>
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="filter-bar">
+      <input type="text" class="search-input" id="searchInput" placeholder="🔍  Name suchen..." oninput="renderTable()">
+      <button class="filter-btn active" data-role="all" onclick="setFilter('all', this)">Alle</button>
+      <button class="filter-btn" data-role="owner" onclick="setFilter('owner', this)">Owner</button>
+      <button class="filter-btn" data-role="jrowner" onclick="setFilter('jrowner', this)">Jr.Owner</button>
+      <button class="filter-btn" data-role="manager" onclick="setFilter('manager', this)">Manager</button>
+      <button class="filter-btn" data-role="srdev" onclick="setFilter('srdev', this)">Sr.Dev</button>
+      <button class="filter-btn" data-role="dev" onclick="setFilter('dev', this)">Dev</button>
+      <button class="filter-btn" data-role="admin" onclick="setFilter('admin', this)">Admin</button>
+      <button class="filter-btn" data-role="srmod" onclick="setFilter('srmod', this)">SrMod</button>
+      <button class="filter-btn" data-role="mod" onclick="setFilter('mod', this)">Mod</button>
+      <button class="filter-btn" data-role="helper" onclick="setFilter('helper', this)">Helper</button>
+    </div>
+
+    <div class="members-panel">
+      <div class="members-header">
+        <div>Mitglied</div>
+        <div>Rolle</div>
+        <div>Hinzugefügt</div>
+        <div>Aktionen</div>
+      </div>
+      <div id="membersTable"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: OVERVIEW -->
+  <div id="page-overview" style="display:none;">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Übersicht</div>
+        <div class="topbar-sub">Team-Statistiken auf einen Blick</div>
+      </div>
+    </div>
+    <div class="stats-bar" id="statsBar2" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"></div>
+    <div style="margin-top: 32px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 32px;">
+      <h3 style="font-family: 'Rajdhani', sans-serif; letter-spacing: 3px; margin-bottom: 24px; color: var(--accent);">ROLLEN VERTEILUNG</h3>
+      <div id="roleChart"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: SERVER -->
+  <div id="page-server" style="display:none;">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Server Informationen</div>
+        <div class="topbar-sub">Aktuelle Serverdetails</div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+      <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+        <div style="font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color: var(--text-dim); margin-bottom:12px;">Server IP</div>
+        <div style="font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--accent); letter-spacing: 3px;">193.135.10.21:15039</div>
+      </div>
+      <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+        <div style="font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color: var(--text-dim); margin-bottom:12px;">Minecraft Version</div>
+        <div style="font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--accent2); letter-spacing: 3px;">1.21.x</div>
+      </div>
+      <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+        <div style="font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color: var(--text-dim); margin-bottom:12px;">Server Typ</div>
+        <div style="font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; color: #fff; letter-spacing: 3px;">Survival SMP</div>
+      </div>
+      <div style="background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px;">
+        <div style="font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color: var(--text-dim); margin-bottom:12px;">Website</div>
+        <div style="font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--accent); letter-spacing: 2px;">web.axosmp.de</div>
+        <div style="font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; color: var(--text-dim); letter-spacing: 2px; margin-top: 6px;">web.axosmp.net/admin</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">MITGLIED HINZUFÜGEN</h2>
+    <div class="form-group">
+      <label class="form-label">Minecraft Name</label>
+      <input type="text" class="form-input" id="inputName" placeholder="z.B. Steve123">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rolle</label>
+      <select class="form-select" id="inputRole">
+        <option value="owner">👑 Owner</option>
+        <option value="jrowner">🔱 Jr.Owner</option>
+        <option value="manager">⭐ Manager</option>
+        <option value="srdev">🧬 Sr.Dev</option>
+        <option value="dev">💻 Dev</option>
+        <option value="admin">🔴 Admin</option>
+        <option value="srmod">🔷 SrMod</option>
+        <option value="mod" selected>🟢 Mod</option>
+        <option value="helper">🔹 Helper</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveMember()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const ROLES = {
+    owner:   { label: "Owner",   icon: "👑", color: "#ff4d4d" },
+    jrowner: { label: "Jr.Owner",icon: "🔱", color: "#ff884d" },
+    manager: { label: "Manager", icon: "⭐", color: "#ffcc00" },
+    srdev:   { label: "Sr.Dev",  icon: "🧬", color: "#a855f7" },
+    dev:     { label: "Dev",     icon: "💻", color: "#818cf8" },
+    admin:   { label: "Admin",   icon: "🔴", color: "#ef4444" },
+    srmod:   { label: "SrMod",   icon: "🔷", color: "#22d3ee" },
+    mod:     { label: "Mod",     icon: "🟢", color: "#34d399" },
+    helper:  { label: "Helper",  icon: "🔹", color: "#94a3b8" },
+  };
+
+  const ROLE_ORDER = ["owner","jrowner","manager","srdev","dev","admin","srmod","mod","helper"];
+
+  const DEFAULT_TEAM = [
+    { id: 1, name: "Axolotl_King", role: "owner",   joined: "2024-01-10" },
+    { id: 2, name: "DarkMaster99", role: "jrowner",  joined: "2024-01-12" },
+    { id: 3, name: "SkyBuilder",   role: "manager",  joined: "2024-02-05" },
+    { id: 4, name: "CodeWizard",   role: "srdev",    joined: "2024-02-15" },
+    { id: 5, name: "PixelDev",     role: "dev",      joined: "2024-03-01" },
+    { id: 6, name: "ServerGuard",  role: "admin",    joined: "2024-03-10" },
+    { id: 7, name: "TopMod",       role: "srmod",    joined: "2024-03-20" },
+    { id: 8, name: "CoolMod",      role: "mod",      joined: "2024-04-01" },
+    { id: 9, name: "NewHelper",    role: "helper",   joined: "2024-04-15" },
+  ];
+
+  let currentFilter = 'all';
+  let editingId = null;
+  let nextId = 100;
+
+  // AUTH
+  function doLogin() {
+    const u = document.getElementById('loginUser').value;
+    const p = document.getElementById('loginPass').value;
+    if (u === 'admin' && p === 'axosmp2025') {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('loggedUser').textContent = u;
+      init();
+    } else {
+      document.getElementById('loginError').textContent = '❌ Falscher Benutzername oder Passwort';
+    }
+  }
+  document.getElementById('loginUser').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+  document.getElementById('loginPass').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+
+  function logout() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+  }
+
+  // DATA
+  function getTeam() {
+    try {
+      const s = localStorage.getItem('axosmp_team_admin');
+      if (s) { const d = JSON.parse(s); return d; }
+    } catch {}
+    const base = DEFAULT_TEAM.map(m => ({...m, display: ROLES[m.role].label}));
+    saveTeam(base); return base;
+  }
+
+  function saveTeam(team) {
+    localStorage.setItem('axosmp_team_admin', JSON.stringify(team));
+    // Sync to main site format
+    const simple = team.map(m => ({ name: m.name, role: m.role, display: ROLES[m.role].label }));
+    localStorage.setItem('axosmp_team', JSON.stringify(simple));
+  }
+
+  // PAGES
+  function setPage(page) {
+    ['team','overview','server'].forEach(p => {
+      document.getElementById('page-'+p).style.display = p === page ? 'block' : 'none';
+    });
+    document.querySelectorAll('.nav-item').forEach((el, i) => {
+      el.classList.toggle('active', ['team','overview','server'][i] === page);
+    });
+    if (page === 'overview') renderOverview();
+  }
+
+  // FILTER
+  function setFilter(role, btn) {
+    currentFilter = role;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  }
+
+  // RENDER TABLE
+  function renderTable() {
+    const team = getTeam();
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = team.filter(m => {
+      const roleMatch = currentFilter === 'all' || m.role === currentFilter;
+      const nameMatch = m.name.toLowerCase().includes(search);
+      return roleMatch && nameMatch;
+    });
+
+    const sorted = [...filtered].sort((a, b) =>
+      ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role)
+    );
+
+    const container = document.getElementById('membersTable');
+    if (!sorted.length) {
+      container.innerHTML = '<div class="empty-state">Keine Mitglieder gefunden.</div>';
+      return;
+    }
+
+    container.innerHTML = sorted.map(m => {
+      const r = ROLES[m.role];
+      const initials = m.name.substring(0, 2).toUpperCase();
+      const bg = r.color + '22';
+      return `
+        <div class="member-row">
+          <div class="member-cell-name">
+            <div class="mini-avatar" style="background:${bg}; color:${r.color}; border: 1px solid ${r.color}44;">${initials}</div>
+            <div>
+              <div class="m-name">${m.name}</div>
+              <div class="m-joined">Seit ${formatDate(m.joined)}</div>
+            </div>
+          </div>
+          <div>
+            <span class="role-badge" style="color:${r.color}; border-color:${r.color}44; background:${r.color}11;">
+              ${r.icon} ${r.label}
+            </span>
+          </div>
+          <div style="color: var(--text-dim); font-size: 0.85rem;">${formatDate(m.joined)}</div>
+          <div class="row-actions">
+            <button class="action-btn" onclick="openEditModal(${m.id})" title="Bearbeiten">✏️</button>
+            <button class="action-btn del" onclick="deleteMember(${m.id})" title="Entfernen">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    renderStats();
+  }
+
+  function formatDate(d) {
+    if (!d) return '–';
+    const [y, mo, da] = d.split('-');
+    return `${da}.${mo}.${y}`;
+  }
+
+  // STATS
+  function renderStats() {
+    const team = getTeam();
+    const bar = document.getElementById('statsBar');
+    bar.innerHTML = ROLE_ORDER.map(r => {
+      const count = team.filter(m => m.role === r).length;
+      return `
+        <div class="stat-card s-${r}">
+          <div class="stat-num">${count}</div>
+          <div class="stat-label">${ROLES[r].icon} ${ROLES[r].label}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderOverview() {
+    const team = getTeam();
+    const bar = document.getElementById('statsBar2');
+    bar.innerHTML = `
+      <div class="stat-card">
+        <div class="stat-num">${team.length}</div>
+        <div class="stat-label">Gesamt Mitglieder</div>
+      </div>
+      ${ROLE_ORDER.map(r => {
+        const count = team.filter(m => m.role === r).length;
+        return `<div class="stat-card s-${r}">
+          <div class="stat-num">${count}</div>
+          <div class="stat-label">${ROLES[r].icon} ${ROLES[r].label}</div>
+        </div>`;
+      }).join('')}
+    `;
+
+    // Role chart (simple bar chart)
+    const chart = document.getElementById('roleChart');
+    const max = Math.max(...ROLE_ORDER.map(r => team.filter(m => m.role === r).length), 1);
+    chart.innerHTML = ROLE_ORDER.map(r => {
+      const count = team.filter(m => m.role === r).length;
+      const pct = (count / max) * 100;
+      const c = ROLES[r].color;
+      return `
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+          <div style="width:80px; font-size:0.75rem; letter-spacing:1px; color:${c}; text-align:right;">
+            ${ROLES[r].icon} ${ROLES[r].label}
+          </div>
+          <div style="flex:1; background: rgba(255,255,255,0.05); border-radius:4px; height:22px; overflow:hidden;">
+            <div style="width:${pct}%; height:100%; background:${c}; border-radius:4px; transition:width 0.8s ease; display:flex; align-items:center; justify-content:flex-end; padding-right:8px;">
+              <span style="font-size:0.75rem; font-weight:700; color:rgba(0,0,0,0.7);">${count > 0 ? count : ''}</span>
+            </div>
+          </div>
+          <div style="width:20px; font-size:0.8rem; font-weight:700; color:var(--text);">${count}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // MODAL
+  function openAddModal() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = 'MITGLIED HINZUFÜGEN';
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputRole').value = 'mod';
+    document.getElementById('modalSaveBtn').textContent = 'Hinzufügen';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function openEditModal(id) {
+    const team = getTeam();
+    const m = team.find(x => x.id === id);
+    if (!m) return;
+    editingId = id;
+    document.getElementById('modalTitle').textContent = 'MITGLIED BEARBEITEN';
+    document.getElementById('inputName').value = m.name;
+    document.getElementById('inputRole').value = m.role;
+    document.getElementById('modalSaveBtn').textContent = 'Speichern';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  function saveMember() {
+    const name = document.getElementById('inputName').value.trim();
+    const role = document.getElementById('inputRole').value;
+    if (!name) { showToast('❌ Bitte einen Namen eingeben!', 'error'); return; }
+
+    const team = getTeam();
+
+    if (editingId !== null) {
+      const idx = team.findIndex(m => m.id === editingId);
+      if (idx !== -1) {
+        team[idx].name = name;
+        team[idx].role = role;
+        team[idx].display = ROLES[role].label;
+      }
+      showToast('✓ Mitglied aktualisiert!', 'success');
+    } else {
+      const today = new Date().toISOString().split('T')[0];
+      team.push({ id: nextId++, name, role, display: ROLES[role].label, joined: today });
+      showToast('✓ Mitglied hinzugefügt!', 'success');
+    }
+
+    saveTeam(team);
+    renderTable();
+    closeModal();
+  }
+
+  function deleteMember(id) {
+    if (!confirm('Mitglied wirklich entfernen?')) return;
+    let team = getTeam();
+    team = team.filter(m => m.id !== id);
+    saveTeam(team);
+    renderTable();
+    showToast('🗑️ Mitglied entfernt!', 'error');
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // Close modal on overlay click
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  // ENTER to login
+  function init() {
+    renderTable();
+    renderStats();
+  }
+</script>
+</body>
+</html>
